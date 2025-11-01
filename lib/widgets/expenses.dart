@@ -24,16 +24,34 @@ class _ExpensesState extends State<Expenses> {
       category: Category.leisure,
     ),
     Expense(
-      title: "Lanch",
+      title: "Lunch",
       amount: 4.5,
       date: DateTime.now(),
       category: Category.food,
     ),
   ];
 
+  _openAddExpenseOverlay() {
+    showModalBottomSheet(
+      // useSafeArea: true,
+      // isScrollControlled: true,
+      context: context,
+      builder: (ctx) => const Text('Hello World'),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        actions: [
+          IconButton(
+            onPressed: _openAddExpenseOverlay,
+            icon: const Icon(Icons.add),
+          ),
+        ],
+        title: const Text('Expense Tracker'),
+      ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
