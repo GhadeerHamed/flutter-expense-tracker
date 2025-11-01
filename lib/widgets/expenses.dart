@@ -1,5 +1,6 @@
 import 'package:expense_tracker_project/widgets/expenses_list/expenses_list.dart';
 import 'package:expense_tracker_project/models/expense.dart';
+import 'package:expense_tracker_project/widgets/new_expense.dart';
 import 'package:flutter/material.dart';
 
 class Expenses extends StatefulWidget {
@@ -36,7 +37,7 @@ class _ExpensesState extends State<Expenses> {
       // useSafeArea: true,
       // isScrollControlled: true,
       context: context,
-      builder: (ctx) => const Text('Hello World'),
+      builder: (ctx) => NewExpense(),
     );
   }
 
