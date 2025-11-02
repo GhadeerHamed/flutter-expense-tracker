@@ -27,7 +27,7 @@ class ChartBar extends StatelessWidget {
                   ? Theme.of(context).colorScheme.secondary
                   : Theme.of(
                       context,
-                    ).colorScheme.primary.withAlpha((255.0 * 0.65).round()),
+                    ).colorScheme.primary.withValues(alpha: 0.65),
             ),
           ),
         ),
