@@ -3,6 +3,7 @@ import 'package:expense_tracker_project/widgets/expenses_list/expenses_list.dart
 import 'package:expense_tracker_project/models/expense.dart';
 import 'package:expense_tracker_project/widgets/new_expense.dart';
 import 'package:flutter/material.dart';
+import '../db/expense_database.dart';
 
 class Expenses extends StatefulWidget {
   const Expenses({super.key});
@@ -12,26 +13,22 @@ class Expenses extends StatefulWidget {
 }
 
 class _ExpensesState extends State<Expenses> {
-  final List<Expense> _registeredExpenses = [
-    Expense(
-      title: 'Flutter Course',
-      amount: 19.99,
-      date: DateTime.now(),
-      category: Category.work,
-    ),
-    Expense(
-      title: 'Cinema',
-      amount: 15.69,
-      date: DateTime.now(),
-      category: Category.leisure,
-    ),
-    Expense(
-      title: "Lunch",
-      amount: 4.5,
-      date: DateTime.now(),
-      category: Category.food,
-    ),
-  ];
+  List<Expense> _registeredExpenses = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExpenses();
+  }
+
+  Future<void> _loadExpenses() async {
+    final expenses = await ExpenseDatabase.instance.fetchExpenses();
+    setState(() {
+      _registeredExpenses = expenses;
+      _isLoading = false;
+    });
+  }
 
   _openAddExpenseOverlay() {
     showModalBottomSheet(
@@ -44,17 +41,16 @@ class _ExpensesState extends State<Expenses> {
     );
   }
 
-  void addExpense(Expense expense) {
-    setState(() {
-      _registeredExpenses.add(expense);
-    });
+
+  Future<void> addExpense(Expense expense) async {
+    await ExpenseDatabase.instance.insertExpense(expense);
+    await _loadExpenses();
   }
 
-  void removeExpense(Expense expense) {
-    final expenseIndex = _registeredExpenses.indexOf(expense);
-    setState(() {
-      _registeredExpenses.remove(expense);
-    });
+  Future<void> removeExpense(Expense expense) async {
+    final expenseIndex = _registeredExpenses.indexWhere((e) => e.id == expense.id);
+    await ExpenseDatabase.instance.deleteExpense(expense.id);
+    await _loadExpenses();
 
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -63,10 +59,9 @@ class _ExpensesState extends State<Expenses> {
         duration: const Duration(seconds: 3),
         action: SnackBarAction(
           label: 'Undo',
-          onPressed: () {
-            setState(() {
-              _registeredExpenses.insert(expenseIndex, expense);
-            });
+          onPressed: () async {
+            await ExpenseDatabase.instance.insertExpense(expense);
+            await _loadExpenses();
           },
         ),
       ),
@@ -80,7 +75,10 @@ class _ExpensesState extends State<Expenses> {
     Widget mainContent = const Center(
       child: Text('No expenses found. Start adding some!'),
     );
-    if (_registeredExpenses.isNotEmpty) {
+
+    if (_isLoading) {
+      mainContent = const Center(child: CircularProgressIndicator());
+    } else if (_registeredExpenses.isNotEmpty) {
       mainContent = ExpensesList(
         expenses: _registeredExpenses,
         onRemoveExpense: removeExpense,

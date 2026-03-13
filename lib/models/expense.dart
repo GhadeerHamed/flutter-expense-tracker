@@ -21,13 +21,34 @@ class Expense {
     required this.amount,
     required this.date,
     required this.category,
-  }) : id = uuid.v4();
+    String? id,
+  }) : id = id ?? uuid.v4();
 
   final String id;
   final String title;
   final double amount;
   final DateTime date;
   final Category category;
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'amount': amount,
+      'date': date.toIso8601String(),
+      'category': category.name,
+    };
+  }
+
+  factory Expense.fromMap(Map<String, dynamic> map) {
+    return Expense(
+      id: map['id'],
+      title: map['title'],
+      amount: map['amount'],
+      date: DateTime.parse(map['date']),
+      category: Category.values.firstWhere((e) => e.name == map['category']),
+    );
+  }
 
   String get formattedDate {
     return formatter.format(date);

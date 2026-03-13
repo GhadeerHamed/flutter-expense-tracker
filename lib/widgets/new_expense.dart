@@ -37,7 +37,7 @@ class _NewExpenseState extends State<NewExpense> {
     });
   }
 
-  void submitExpenseData() {
+  Future<void> submitExpenseData() async {
     final enteredAmount = double.tryParse(_amountController.text);
     final amountIsInvalid = enteredAmount == null || enteredAmount <= 0;
 
@@ -64,15 +64,13 @@ class _NewExpenseState extends State<NewExpense> {
       return;
     }
 
-    widget.onAddExpense(
-      Expense(
-        title: _titleController.text,
-        amount: enteredAmount,
-        date: _selectedDate!,
-        category: _selectedCategory,
-      ),
+    final newExpense = Expense(
+      title: _titleController.text,
+      amount: enteredAmount,
+      date: _selectedDate!,
+      category: _selectedCategory,
     );
-
+    widget.onAddExpense(newExpense);
     Navigator.pop(context);
   }
 
