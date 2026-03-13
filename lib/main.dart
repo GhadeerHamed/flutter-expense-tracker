@@ -10,15 +10,13 @@ var kDarkColorScheme = ColorScheme.fromSeed(
   brightness: Brightness.dark,
   seedColor: const Color.fromARGB(255, 5, 99, 125),
 );
-void main() {
-  // WidgetsFlutterBinding.ensureInitialized();
-  // SystemChrome.setPreferredOrientations(
-  //   [
-  //     DeviceOrientation.portraitUp,
-  //   ],
-  // ).then((_) {
-  runApp(
-    MaterialApp(
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
       darkTheme: ThemeData.dark().copyWith(
         colorScheme: kDarkColorScheme,
         cardTheme: const CardThemeData().copyWith(
@@ -63,10 +61,18 @@ void main() {
         ),
       ),
       themeMode: ThemeMode.system,
-      home: Scaffold(
-        body: Expenses(),
-      ),
-    ),
-  );
+      home: const Expenses(),
+    );
+  }
+}
+
+void main() {
+  // WidgetsFlutterBinding.ensureInitialized();
+  // SystemChrome.setPreferredOrientations(
+  //   [
+  //     DeviceOrientation.portraitUp,
+  //   ],
+  // ).then((_) {
+  runApp(const MyApp());
   // });
 }

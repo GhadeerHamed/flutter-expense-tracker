@@ -19,8 +19,9 @@ class ExpenseDatabase {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: _upgradeDB,
     );
   }
 
@@ -30,10 +31,31 @@ class ExpenseDatabase {
         id TEXT PRIMARY KEY,
         title TEXT,
         amount REAL,
-        date TEXT,
-        category TEXT
+        date TEXT
       )
     ''');
+  }
+
+  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('''
+        CREATE TABLE expenses_new (
+          id TEXT PRIMARY KEY,
+          title TEXT,
+          amount REAL,
+          date TEXT
+        )
+      ''');
+
+      await db.execute('''
+        INSERT INTO expenses_new (id, title, amount, date)
+        SELECT id, title, amount, date
+        FROM expenses
+      ''');
+
+      await db.execute('DROP TABLE expenses');
+      await db.execute('ALTER TABLE expenses_new RENAME TO expenses');
+    }
   }
 
   Future<void> insertExpense(Expense expense) async {

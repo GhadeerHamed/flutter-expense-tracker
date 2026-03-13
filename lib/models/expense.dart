@@ -5,22 +5,13 @@ import 'package:uuid/uuid.dart';
 final formatter = DateFormat.yMd();
 const uuid = Uuid();
 
-enum Category { food, travel, leisure, work, other }
-
-const categoryIcons = {
-  Category.food: Icons.lunch_dining,
-  Category.travel: Icons.flight_takeoff,
-  Category.leisure: Icons.movie,
-  Category.work: Icons.work,
-  Category.other: Icons.category,
-};
+const expenseIcon = Icons.receipt_long;
 
 class Expense {
   Expense({
     required this.title,
     required this.amount,
     required this.date,
-    required this.category,
     String? id,
   }) : id = id ?? uuid.v4();
 
@@ -28,7 +19,6 @@ class Expense {
   final String title;
   final double amount;
   final DateTime date;
-  final Category category;
 
   Map<String, dynamic> toMap() {
     return {
@@ -36,7 +26,6 @@ class Expense {
       'title': title,
       'amount': amount,
       'date': date.toIso8601String(),
-      'category': category.name,
     };
   }
 
@@ -44,33 +33,12 @@ class Expense {
     return Expense(
       id: map['id'],
       title: map['title'],
-      amount: map['amount'],
+      amount: (map['amount'] as num).toDouble(),
       date: DateTime.parse(map['date']),
-      category: Category.values.firstWhere((e) => e.name == map['category']),
     );
   }
 
   String get formattedDate {
     return formatter.format(date);
-  }
-}
-
-class ExpenseBucket {
-  ExpenseBucket({required this.category, required this.expenses});
-
-  ExpenseBucket.forCategory(List<Expense> allExpenses, this.category)
-    : expenses = allExpenses
-          .where((expense) => expense.category == category)
-          .toList();
-
-  final Category category;
-  final List<Expense> expenses;
-
-  double get totalExpenses {
-    double sum = 0;
-    for (final expense in expenses) {
-      sum += expense.amount;
-    }
-    return sum;
   }
 }

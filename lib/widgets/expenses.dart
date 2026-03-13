@@ -31,16 +31,24 @@ class _ExpensesState extends State<Expenses> {
   }
 
   _openAddExpenseOverlay() {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     showModalBottomSheet(
       useSafeArea: true,
       isScrollControlled: true,
       context: context,
-      builder: (ctx) => NewExpense(
-        onAddExpense: addExpense,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      constraints: BoxConstraints(maxHeight: screenHeight),
+      builder: (ctx) => SizedBox(
+        height: screenHeight,
+        child: NewExpense(
+          onAddExpense: addExpense,
+        ),
       ),
     );
   }
-
 
   Future<void> addExpense(Expense expense) async {
     await ExpenseDatabase.instance.insertExpense(expense);
@@ -48,7 +56,6 @@ class _ExpensesState extends State<Expenses> {
   }
 
   Future<void> removeExpense(Expense expense) async {
-    final expenseIndex = _registeredExpenses.indexWhere((e) => e.id == expense.id);
     await ExpenseDatabase.instance.deleteExpense(expense.id);
     await _loadExpenses();
 
