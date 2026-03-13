@@ -1,5 +1,6 @@
 import 'package:expense_tracker_project/models/expense.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class NewExpense extends StatefulWidget {
   const NewExpense({super.key, required this.onAddExpense});
@@ -14,8 +15,19 @@ class _NewExpenseState extends State<NewExpense> {
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
-  // Kept for hot-reload compatibility with older widget state.
-  bool _isLoadingCategories = false;
+
+  final _amountInputFormatter = TextInputFormatter.withFunction((
+    oldValue,
+    newValue,
+  ) {
+    final text = newValue.text;
+    if (text.isEmpty) {
+      return newValue;
+    }
+
+    final isValid = RegExp(r'^\d*\.?\d*$').hasMatch(text);
+    return isValid ? newValue : oldValue;
+  });
 
   @override
   void dispose() {
@@ -104,6 +116,7 @@ class _NewExpenseState extends State<NewExpense> {
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
+                      inputFormatters: [_amountInputFormatter],
                       decoration: const InputDecoration(
                         prefixText: '\$ ',
                         label: Text('Amount'),
@@ -124,6 +137,7 @@ class _NewExpenseState extends State<NewExpense> {
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
+                inputFormatters: [_amountInputFormatter],
                 decoration: const InputDecoration(
                   prefixText: '\$ ',
                   label: Text('Amount'),
