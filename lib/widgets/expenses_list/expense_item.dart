@@ -23,7 +23,7 @@ class ExpenseItem extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                Text('\$${expense.amount.toStringAsFixed(2)}'),
+                Text('lei ${expense.amount.toStringAsFixed(2)}'),
                 const Spacer(),
                 Text(expense.formattedDate),
               ],

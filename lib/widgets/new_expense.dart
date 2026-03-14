@@ -118,7 +118,7 @@ class _NewExpenseState extends State<NewExpense> {
                       ),
                       inputFormatters: [_amountInputFormatter],
                       decoration: const InputDecoration(
-                        prefixText: '\$ ',
+                        prefixText: 'lei ',
                         label: Text('Amount'),
                       ),
                     ),
@@ -139,7 +139,7 @@ class _NewExpenseState extends State<NewExpense> {
                 ),
                 inputFormatters: [_amountInputFormatter],
                 decoration: const InputDecoration(
-                  prefixText: '\$ ',
+                  prefixText: 'lei ',
                   label: Text('Amount'),
                 ),
               ),

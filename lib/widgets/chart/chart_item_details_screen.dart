@@ -55,7 +55,7 @@ class _ChartItemDetailsScreenState extends State<ChartItemDetailsScreen> {
             child: Row(
               children: [
                 Text(
-                  'Total: \$${widget.total.toStringAsFixed(2)}',
+                  'Total: lei ${widget.total.toStringAsFixed(2)}',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const Spacer(),
@@ -132,7 +132,7 @@ class _ChartItemDetailsScreenState extends State<ChartItemDetailsScreen> {
                   leading: const Icon(Icons.receipt_long),
                   title: Text(item.title),
                   subtitle: Text(item.formattedDate),
-                  trailing: Text('\$${item.amount.toStringAsFixed(2)}'),
+                  trailing: Text('lei ${item.amount.toStringAsFixed(2)}'),
                   tileColor: index.isEven
                       ? Colors.grey.withValues(alpha: .3)
                       : Colors.transparent,

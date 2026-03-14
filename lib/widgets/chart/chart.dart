@@ -227,7 +227,7 @@ class _ExpenseBar extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             Text(
-              '\$${group.total.toStringAsFixed(0)}',
+              'lei ${group.total.toStringAsFixed(0)}',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 6),
