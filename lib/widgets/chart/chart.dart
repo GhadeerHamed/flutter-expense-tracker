@@ -59,15 +59,14 @@ class _ChartState extends State<Chart> {
     return dayStart.subtract(Duration(days: dayStart.weekday - 1));
   }
 
-  int _isoWeekNumber(DateTime date) {
+  ({int week, int year}) _isoWeekInfo(DateTime date) {
     final day = DateTime(date.year, date.month, date.day);
     final thursday = day.add(Duration(days: 4 - day.weekday));
-    final firstThursday = DateTime(
-      thursday.year,
-      1,
-      4,
-    ).add(Duration(days: 4 - DateTime(thursday.year, 1, 4).weekday));
-    return 1 + ((thursday.difference(firstThursday).inDays) ~/ 7);
+    final weekYear = thursday.year;
+    final jan4 = DateTime(weekYear, 1, 4);
+    final firstThursday = jan4.add(Duration(days: 4 - jan4.weekday));
+    final week = 1 + ((thursday.difference(firstThursday).inDays) ~/ 7);
+    return (week: week, year: weekYear);
   }
 
   ({String key, String name}) _groupIdentity(Expense expense) {
@@ -95,9 +94,10 @@ class _ChartState extends State<Chart> {
           expense.date.day,
         );
         final weekStart = _startOfWeek(dayStart);
+        final weekInfo = _isoWeekInfo(dayStart);
         return (
           key: 'week:${DateFormat('yyyy-MM-dd').format(weekStart)}',
-          name: 'W-${_isoWeekNumber(dayStart)} ${dayStart.year}',
+          name: 'W-${weekInfo.week} ${weekInfo.year}',
         );
       case ChartGroupingMode.month:
         final month = DateTime(expense.date.year, expense.date.month);
