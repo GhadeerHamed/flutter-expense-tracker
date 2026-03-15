@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:expense_tracker_project/widgets/chart/chart.dart';
 import 'package:expense_tracker_project/widgets/expenses_list/expenses_list.dart';
 import 'package:expense_tracker_project/models/expense.dart';
@@ -14,27 +16,100 @@ class Expenses extends StatefulWidget {
 }
 
 class _ExpensesState extends State<Expenses> {
+  static const int _pageSize = 6;
+
   List<Expense> _registeredExpenses = [];
+  List<Expense> _chartExpenses = [];
   final ExchangeRateService _exchangeRateService = ExchangeRateService();
   Map<String, double> _exchangeRatesToRon = const {'RON': 1.0};
+  final ScrollController _scrollController = ScrollController();
   bool _isLoading = true;
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
+  int _offset = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadExpenses();
+    _scrollController.addListener(_onScroll);
+    _loadInitialExpenses();
   }
 
-  Future<void> _loadExpenses() async {
-    final expenses = await ExpenseDatabase.instance.fetchExpenses();
-    final codes = expenses.map((e) => e.currencyCode).toSet();
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients ||
+        _isLoading ||
+        _isLoadingMore ||
+        !_hasMore) {
+      return;
+    }
+
+    final threshold = _scrollController.position.maxScrollExtent - 200;
+    if (_scrollController.position.pixels >= threshold) {
+      _loadMoreExpenses();
+    }
+  }
+
+  Future<void> _loadInitialExpenses() async {
+    final firstPage = await ExpenseDatabase.instance.fetchExpensesPage(
+      limit: _pageSize,
+      offset: 0,
+    );
+    final allExpenses = await ExpenseDatabase.instance.fetchExpenses();
+    final codes = allExpenses.map((e) => e.currencyCode).toSet();
     final rates = await _exchangeRateService.fetchRatesToRon(codes);
 
+    if (!mounted) {
+      return;
+    }
+
     setState(() {
-      _registeredExpenses = expenses;
+      _registeredExpenses = firstPage;
+      _chartExpenses = allExpenses.isNotEmpty ? allExpenses : firstPage;
       _exchangeRatesToRon = rates;
+      _offset = firstPage.length;
+      _hasMore = firstPage.length == _pageSize;
       _isLoading = false;
     });
+  }
+
+  Future<void> _loadMoreExpenses() async {
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    final nextPage = await ExpenseDatabase.instance.fetchExpensesPage(
+      limit: _pageSize,
+      offset: _offset,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _registeredExpenses = [..._registeredExpenses, ...nextPage];
+      _offset += nextPage.length;
+      _hasMore = nextPage.length == _pageSize;
+      _isLoadingMore = false;
+    });
+  }
+
+  Future<void> _refreshExpenses() async {
+    setState(() {
+      _isLoading = true;
+      _isLoadingMore = false;
+      _hasMore = true;
+      _offset = 0;
+    });
+
+    await _loadInitialExpenses();
   }
 
   _openAddExpenseOverlay() {
@@ -59,12 +134,12 @@ class _ExpensesState extends State<Expenses> {
 
   Future<void> addExpense(Expense expense) async {
     await ExpenseDatabase.instance.insertExpense(expense);
-    await _loadExpenses();
+    await _refreshExpenses();
   }
 
   Future<void> removeExpense(Expense expense) async {
     await ExpenseDatabase.instance.deleteExpense(expense.id);
-    await _loadExpenses();
+    await _refreshExpenses();
 
     if (!mounted) {
       return;
@@ -79,7 +154,7 @@ class _ExpensesState extends State<Expenses> {
           label: 'Undo',
           onPressed: () async {
             await ExpenseDatabase.instance.insertExpense(expense);
-            await _loadExpenses();
+            await _refreshExpenses();
           },
         ),
       ),
@@ -89,6 +164,9 @@ class _ExpensesState extends State<Expenses> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
+    final chartData = _chartExpenses.isNotEmpty
+        ? _chartExpenses
+        : _registeredExpenses;
 
     Widget mainContent = const Center(
       child: Text('No expenses found. Start adding some!'),
@@ -100,6 +178,8 @@ class _ExpensesState extends State<Expenses> {
       mainContent = ExpensesList(
         expenses: _registeredExpenses,
         onRemoveExpense: removeExpense,
+        scrollController: _scrollController,
+        isLoadingMore: _isLoadingMore,
       );
     }
 
@@ -117,7 +197,7 @@ class _ExpensesState extends State<Expenses> {
           ? Column(
               children: [
                 Chart(
-                  expenses: _registeredExpenses,
+                  expenses: chartData,
                   exchangeRatesToRon: _exchangeRatesToRon,
                 ),
                 const SizedBox(height: 16),
@@ -130,7 +210,7 @@ class _ExpensesState extends State<Expenses> {
               children: [
                 Expanded(
                   child: Chart(
-                    expenses: _registeredExpenses,
+                    expenses: chartData,
                     exchangeRatesToRon: _exchangeRatesToRon,
                   ),
                 ),

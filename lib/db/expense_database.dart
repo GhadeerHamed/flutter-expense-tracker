@@ -117,7 +117,21 @@ class ExpenseDatabase {
 
   Future<List<Expense>> fetchExpenses() async {
     final db = await instance.database;
-    final maps = await db.query('expenses');
+    final maps = await db.query('expenses', orderBy: 'date DESC');
+    return maps.map((e) => Expense.fromMap(e)).toList();
+  }
+
+  Future<List<Expense>> fetchExpensesPage({
+    required int limit,
+    required int offset,
+  }) async {
+    final db = await instance.database;
+    final maps = await db.query(
+      'expenses',
+      orderBy: 'date DESC',
+      limit: limit,
+      offset: offset,
+    );
     return maps.map((e) => Expense.fromMap(e)).toList();
   }
 
