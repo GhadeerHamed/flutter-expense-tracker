@@ -38,9 +38,14 @@ class ExpenseChartGroup {
 }
 
 class Chart extends StatefulWidget {
-  const Chart({super.key, required this.expenses});
+  const Chart({
+    super.key,
+    required this.expenses,
+    required this.exchangeRatesToRon,
+  });
 
   final List<Expense> expenses;
+  final Map<String, double> exchangeRatesToRon;
 
   @override
   State<Chart> createState() => _ChartState();
@@ -105,7 +110,10 @@ class _ChartState extends State<Chart> {
     final result = grouped.entries.map((entry) {
       final items = [...entry.value.items]
         ..sort((a, b) => b.date.compareTo(a.date));
-      final total = items.fold<double>(0, (sum, e) => sum + e.amount);
+      final total = items.fold<double>(
+        0,
+        (sum, e) => sum + e.amountInRon(widget.exchangeRatesToRon),
+      );
       return ExpenseChartGroup(
         key: entry.key,
         name: entry.value.name,
@@ -186,6 +194,8 @@ class _ChartState extends State<Chart> {
                                       items: group.items,
                                       total: group.total,
                                       groupingMode: _groupingMode,
+                                      exchangeRatesToRon:
+                                          widget.exchangeRatesToRon,
                                     ),
                                   ),
                                 );

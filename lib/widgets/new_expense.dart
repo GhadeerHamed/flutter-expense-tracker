@@ -2,6 +2,9 @@ import 'package:expense_tracker_project/models/expense.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../db/expense_database.dart';
+import '../models/currency.dart';
+
 class NewExpense extends StatefulWidget {
   const NewExpense({super.key, required this.onAddExpense});
 
@@ -15,6 +18,8 @@ class _NewExpenseState extends State<NewExpense> {
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
+  List<CurrencyDef> _currencies = CurrencyCatalog.supported;
+  String _selectedCurrencyCode = 'RON';
 
   final _amountInputFormatter = TextInputFormatter.withFunction((
     oldValue,
@@ -28,6 +33,29 @@ class _NewExpenseState extends State<NewExpense> {
     final isValid = RegExp(r'^\d*\.?\d*$').hasMatch(text);
     return isValid ? newValue : oldValue;
   });
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrencies();
+  }
+
+  Future<void> _loadCurrencies() async {
+    final dbCurrencies = await ExpenseDatabase.instance.fetchActiveCurrencies();
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _currencies = dbCurrencies.isNotEmpty
+          ? dbCurrencies
+          : CurrencyCatalog.supported;
+      _selectedCurrencyCode =
+          _currencies.any((c) => c.code == _selectedCurrencyCode)
+          ? _selectedCurrencyCode
+          : _currencies.first.code;
+    });
+  }
 
   @override
   void dispose() {
@@ -80,6 +108,7 @@ class _NewExpenseState extends State<NewExpense> {
       title: _titleController.text.trim(),
       amount: enteredAmount,
       date: _selectedDate,
+      currencyCode: _selectedCurrencyCode,
     );
 
     await widget.onAddExpense(newExpense);
@@ -92,6 +121,10 @@ class _NewExpenseState extends State<NewExpense> {
   Widget build(BuildContext context) {
     final keyboardSpace = MediaQuery.of(context).viewInsets.bottom;
     final width = MediaQuery.of(context).size.width;
+    final selectedCurrency = _currencies.firstWhere(
+      (currency) => currency.code == _selectedCurrencyCode,
+      orElse: () => CurrencyCatalog.ron,
+    );
 
     return SingleChildScrollView(
       child: Padding(
@@ -117,10 +150,37 @@ class _NewExpenseState extends State<NewExpense> {
                         decimal: true,
                       ),
                       inputFormatters: [_amountInputFormatter],
-                      decoration: const InputDecoration(
-                        prefixText: 'lei ',
-                        label: Text('Amount'),
+                      decoration: InputDecoration(
+                        prefixText: '${selectedCurrency.symbol} ',
+                        label: const Text('Amount'),
                       ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      initialValue: _selectedCurrencyCode,
+                      decoration: const InputDecoration(
+                        labelText: 'Currency',
+                      ),
+                      items: _currencies
+                          .map(
+                            (currency) => DropdownMenuItem(
+                              value: currency.code,
+                              child: Text(
+                                '${currency.code} (${currency.symbol})',
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value == null) {
+                          return;
+                        }
+                        setState(() {
+                          _selectedCurrencyCode = value;
+                        });
+                      },
                     ),
                   ),
                 ],
@@ -138,10 +198,33 @@ class _NewExpenseState extends State<NewExpense> {
                   decimal: true,
                 ),
                 inputFormatters: [_amountInputFormatter],
-                decoration: const InputDecoration(
-                  prefixText: 'lei ',
-                  label: Text('Amount'),
+                decoration: InputDecoration(
+                  prefixText: '${selectedCurrency.symbol} ',
+                  label: const Text('Amount'),
                 ),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: _selectedCurrencyCode,
+                decoration: const InputDecoration(
+                  labelText: 'Currency',
+                ),
+                items: _currencies
+                    .map(
+                      (currency) => DropdownMenuItem(
+                        value: currency.code,
+                        child: Text('${currency.code} (${currency.symbol})'),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value == null) {
+                    return;
+                  }
+                  setState(() {
+                    _selectedCurrencyCode = value;
+                  });
+                },
               ),
             ],
             const SizedBox(height: 12),

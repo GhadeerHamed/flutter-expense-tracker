@@ -4,6 +4,7 @@ import 'package:expense_tracker_project/models/expense.dart';
 import 'package:expense_tracker_project/widgets/new_expense.dart';
 import 'package:flutter/material.dart';
 import '../db/expense_database.dart';
+import '../services/exchange_rate_service.dart';
 
 class Expenses extends StatefulWidget {
   const Expenses({super.key});
@@ -14,6 +15,8 @@ class Expenses extends StatefulWidget {
 
 class _ExpensesState extends State<Expenses> {
   List<Expense> _registeredExpenses = [];
+  final ExchangeRateService _exchangeRateService = ExchangeRateService();
+  Map<String, double> _exchangeRatesToRon = const {'RON': 1.0};
   bool _isLoading = true;
 
   @override
@@ -24,8 +27,12 @@ class _ExpensesState extends State<Expenses> {
 
   Future<void> _loadExpenses() async {
     final expenses = await ExpenseDatabase.instance.fetchExpenses();
+    final codes = expenses.map((e) => e.currencyCode).toSet();
+    final rates = await _exchangeRateService.fetchRatesToRon(codes);
+
     setState(() {
       _registeredExpenses = expenses;
+      _exchangeRatesToRon = rates;
       _isLoading = false;
     });
   }
@@ -58,6 +65,10 @@ class _ExpensesState extends State<Expenses> {
   Future<void> removeExpense(Expense expense) async {
     await ExpenseDatabase.instance.deleteExpense(expense.id);
     await _loadExpenses();
+
+    if (!mounted) {
+      return;
+    }
 
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -105,7 +116,10 @@ class _ExpensesState extends State<Expenses> {
       body: width < 600
           ? Column(
               children: [
-                Chart(expenses: _registeredExpenses),
+                Chart(
+                  expenses: _registeredExpenses,
+                  exchangeRatesToRon: _exchangeRatesToRon,
+                ),
                 const SizedBox(height: 16),
                 Expanded(
                   child: mainContent,
@@ -115,7 +129,10 @@ class _ExpensesState extends State<Expenses> {
           : Row(
               children: [
                 Expanded(
-                  child: Chart(expenses: _registeredExpenses),
+                  child: Chart(
+                    expenses: _registeredExpenses,
+                    exchangeRatesToRon: _exchangeRatesToRon,
+                  ),
                 ),
                 Expanded(
                   child: mainContent,

@@ -13,12 +13,14 @@ class ChartItemDetailsScreen extends StatefulWidget {
     required this.items,
     required this.total,
     required this.groupingMode,
+    required this.exchangeRatesToRon,
   });
 
   final String groupName;
   final List<Expense> items;
   final double total;
   final ChartGroupingMode groupingMode;
+  final Map<String, double> exchangeRatesToRon;
 
   @override
   State<ChartItemDetailsScreen> createState() => _ChartItemDetailsScreenState();
@@ -33,7 +35,9 @@ class _ChartItemDetailsScreenState extends State<ChartItemDetailsScreen> {
     list.sort((a, b) {
       int comparison;
       if (_sortField == DetailSortField.amount) {
-        comparison = a.amount.compareTo(b.amount);
+        comparison = a
+            .amountInRon(widget.exchangeRatesToRon)
+            .compareTo(b.amountInRon(widget.exchangeRatesToRon));
       } else {
         comparison = a.date.compareTo(b.date);
       }
@@ -55,7 +59,7 @@ class _ChartItemDetailsScreenState extends State<ChartItemDetailsScreen> {
             child: Row(
               children: [
                 Text(
-                  'Total: lei ${widget.total.toStringAsFixed(2)}',
+                  'Total (RON): ${widget.total.toStringAsFixed(2)}',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const Spacer(),
@@ -71,7 +75,7 @@ class _ChartItemDetailsScreenState extends State<ChartItemDetailsScreen> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<DetailSortField>(
-                    value: _sortField,
+                    initialValue: _sortField,
                     decoration: const InputDecoration(labelText: 'Sort By'),
                     items: const [
                       DropdownMenuItem(
@@ -96,7 +100,7 @@ class _ChartItemDetailsScreenState extends State<ChartItemDetailsScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: DropdownButtonFormField<DetailSortOrder>(
-                    value: _sortOrder,
+                    initialValue: _sortOrder,
                     decoration: const InputDecoration(labelText: 'Order'),
                     items: const [
                       DropdownMenuItem(
@@ -131,8 +135,10 @@ class _ChartItemDetailsScreenState extends State<ChartItemDetailsScreen> {
                 return ListTile(
                   leading: const Icon(Icons.receipt_long),
                   title: Text(item.title),
-                  subtitle: Text(item.formattedDate),
-                  trailing: Text('lei ${item.amount.toStringAsFixed(2)}'),
+                  subtitle: Text(
+                    '${item.formattedDate} • RON ${item.amountInRon(widget.exchangeRatesToRon).toStringAsFixed(2)}',
+                  ),
+                  trailing: Text(item.formattedAmount),
                   tileColor: index.isEven
                       ? Colors.grey.withValues(alpha: .3)
                       : Colors.transparent,

@@ -28,7 +28,7 @@ class ExpenseBar extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             Text(
-              'lei ${group.total.toStringAsFixed(0)}',
+              'RON ${group.total.toStringAsFixed(0)}',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 6),
