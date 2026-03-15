@@ -54,6 +54,22 @@ class Chart extends StatefulWidget {
 class _ChartState extends State<Chart> {
   ChartGroupingMode _groupingMode = ChartGroupingMode.item;
 
+  DateTime _startOfWeek(DateTime date) {
+    final dayStart = DateTime(date.year, date.month, date.day);
+    return dayStart.subtract(Duration(days: dayStart.weekday - 1));
+  }
+
+  int _isoWeekNumber(DateTime date) {
+    final day = DateTime(date.year, date.month, date.day);
+    final thursday = day.add(Duration(days: 4 - day.weekday));
+    final firstThursday = DateTime(
+      thursday.year,
+      1,
+      4,
+    ).add(Duration(days: 4 - DateTime(thursday.year, 1, 4).weekday));
+    return 1 + ((thursday.difference(firstThursday).inDays) ~/ 7);
+  }
+
   ({String key, String name}) _groupIdentity(Expense expense) {
     switch (_groupingMode) {
       case ChartGroupingMode.item:
@@ -78,12 +94,10 @@ class _ChartState extends State<Chart> {
           expense.date.month,
           expense.date.day,
         );
-        final weekStart = dayStart.subtract(
-          Duration(days: dayStart.weekday - 1),
-        );
+        final weekStart = _startOfWeek(dayStart);
         return (
           key: 'week:${DateFormat('yyyy-MM-dd').format(weekStart)}',
-          name: 'Week of ${DateFormat('dd MMM').format(weekStart)}',
+          name: 'W-${_isoWeekNumber(dayStart)} ${dayStart.year}',
         );
       case ChartGroupingMode.month:
         final month = DateTime(expense.date.year, expense.date.month);
@@ -122,7 +136,15 @@ class _ChartState extends State<Chart> {
       );
     }).toList();
 
-    result.sort((a, b) => b.total.compareTo(a.total));
+    result.sort((a, b) {
+      final aEarliestDate = a.items
+          .map((item) => item.date)
+          .reduce((left, right) => left.isBefore(right) ? left : right);
+      final bEarliestDate = b.items
+          .map((item) => item.date)
+          .reduce((left, right) => left.isBefore(right) ? left : right);
+      return aEarliestDate.compareTo(bEarliestDate);
+    });
     return result;
   }
 
